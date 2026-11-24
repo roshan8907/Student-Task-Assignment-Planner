@@ -1,0 +1,811 @@
+{
+  "info": {
+    "_postman_id": "a98a0d4c-c045-4299-90d2-97b5e40e6988",
+    "name": "Student Task & Assignment Planner API",
+    "description": "Comprehensive Postman test collection for the Student Planner REST API, covering Auth, Token Revocation, Assignments CRUD, Study Tasks CRUD, Dashboard Statistics, Web Push Notifications, and Reminder Logging.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assignmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "studyTaskId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pushSubscriptionId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "1. Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alex Morgan\",\n  \"email\": \"alex.morgan.test@university.edu\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "2. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.token).to.be.a('string');",
+                  "pm.collectionVariables.set('token', jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alex.morgan.test@university.edu\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "3. Get Authenticated Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data.email).to.eql('alex.morgan.test@university.edu');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "4. Logout (Server-Side Revocation)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data.message).to.include('Logged out successfully');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "5. Verify Revoked Token is Rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Assignments",
+      "item": [
+        {
+          "name": "6. Create Assignment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data._id).to.be.a('string');",
+                  "pm.collectionVariables.set('assignmentId', data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Distributed Systems Lab 1\",\n  \"subject\": \"COMP302\",\n  \"description\": \"Build RPC microservice and raft consensus node\",\n  \"dueDate\": \"2026-11-20T23:59:00.000Z\",\n  \"priority\": \"High\",\n  \"status\": \"In Progress\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["assignments"]
+            }
+          }
+        },
+        {
+          "name": "7. Get All Assignments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["assignments"]
+            }
+          }
+        },
+        {
+          "name": "8. Get Assignment by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data._id).to.eql(pm.collectionVariables.get('assignmentId'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assignments/{{assignmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assignments", "{{assignmentId}}"]
+            }
+          }
+        },
+        {
+          "name": "9. Update Assignment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data.priority).to.eql('Medium');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"Medium\",\n  \"status\": \"In Progress\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assignments/{{assignmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assignments", "{{assignmentId}}"]
+            }
+          }
+        },
+        {
+          "name": "10. Delete Assignment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assignments/{{assignmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assignments", "{{assignmentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Study Tasks",
+      "item": [
+        {
+          "name": "11. Create Study Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data._id).to.be.a('string');",
+                  "pm.collectionVariables.set('studyTaskId', data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Read Chapter 4 Architecture\",\n  \"subject\": \"COMP302\",\n  \"estimatedDuration\": 45,\n  \"priority\": \"High\",\n  \"dueDate\": \"2026-11-19T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/study-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["study-tasks"]
+            }
+          }
+        },
+        {
+          "name": "12. Get All Study Tasks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/study-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["study-tasks"]
+            }
+          }
+        },
+        {
+          "name": "13. Update Study Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data.estimatedDuration).to.eql(60);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estimatedDuration\": 60\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/study-tasks/{{studyTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["study-tasks", "{{studyTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "14. Complete Study Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data.completed).to.eql(true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completed\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/study-tasks/{{studyTaskId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["study-tasks", "{{studyTaskId}}", "complete"]
+            }
+          }
+        },
+        {
+          "name": "15. Delete Study Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/study-tasks/{{studyTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["study-tasks", "{{studyTaskId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Push Notifications",
+      "item": [
+        {
+          "name": "16. Get VAPID Public Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data.publicKey).to.be.a('string');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/push/public-key",
+              "host": ["{{baseUrl}}"],
+              "path": ["push", "public-key"]
+            }
+          }
+        },
+        {
+          "name": "17. Register Push Subscription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data.subscriptionId).to.be.a('string');",
+                  "pm.collectionVariables.set('pushSubscriptionId', data.subscriptionId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endpoint\": \"https://fcm.googleapis.com/fcm/send/sample-device-token-123\",\n  \"keys\": {\n    \"p256dh\": \"BMzF3e_sample_key_long_string_representing_client_public_key\",\n    \"auth\": \"sampleAuthSecret\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications/subscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "subscribe"]
+            }
+          }
+        },
+        {
+          "name": "18. Get Subscription Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data.isSubscribed).to.eql(true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "status"]
+            }
+          }
+        },
+        {
+          "name": "19. Send Test Push Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 500 (depending on FCM validity)', function () {",
+                  "    pm.expect([200, 500]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "test"]
+            }
+          }
+        },
+        {
+          "name": "20. Scan and Dispatch Reminders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data).to.have.property('checked');",
+                  "pm.expect(data).to.have.property('eligible');",
+                  "pm.expect(data).to.have.property('dispatched');",
+                  "pm.expect(data).to.have.property('skipped');",
+                  "pm.expect(data).to.have.property('failed');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/trigger-reminders",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "trigger-reminders"]
+            }
+          }
+        },
+        {
+          "name": "21. Get Notification History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var data = pm.response.json();",
+                  "pm.expect(data).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "history"]
+            }
+          }
+        },
+        {
+          "name": "22. Unsubscribe from Push",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/subscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "subscribe"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

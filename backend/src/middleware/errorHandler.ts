@@ -1,0 +1,3 @@
+import type {Request,Response,NextFunction} from 'express'; import {AppError} from '../utils/errors.js';
+export function notFound(_req:Request,_res:Response,next:NextFunction){next(new AppError(404,'Route not found'));}
+export function errorHandler(err:unknown,_req:Request,res:Response,_next:NextFunction){const e=err as Error & {statusCode?:number;code?:number;errors?:unknown};if(e.code===11000)return res.status(409).json({error:'An account with this email already exists'});const status=e.statusCode||500;const message=status===500?'Internal server error':e.message; if(status===500)console.error(err);res.status(status).json({error:message,...(e.errors?{details:e.errors}:{})});}

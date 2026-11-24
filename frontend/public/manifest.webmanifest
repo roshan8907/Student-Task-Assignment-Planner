@@ -1,0 +1,17 @@
+{
+  "name": "Student Task & Assignment Planner",
+  "short_name": "StudentPlanner",
+  "description": "Organize academic deadlines, study activities, and receive push reminders.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#061510",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+import 'dotenv/config';
+export const env={port:Number(process.env.PORT||4000),nodeEnv:process.env.NODE_ENV||'development',mongoUri:process.env.MONGODB_URI||'mongodb://127.0.0.1:27017/student_planner',jwtSecret:process.env.JWT_SECRET||'development-only-change-this-secret-32-chars',jwtExpiresIn:process.env.JWT_EXPIRES_IN||'1d',clientOrigin:process.env.CLIENT_ORIGIN||'http://localhost:5173',vapidPublic:process.env.VAPID_PUBLIC_KEY||'',vapidPrivate:process.env.VAPID_PRIVATE_KEY||'',vapidSubject:process.env.VAPID_SUBJECT||'mailto:admin@example.com'};
+if(env.nodeEnv==='production' && env.jwtSecret.length<32) throw new Error('JWT_SECRET must be at least 32 characters in production');
